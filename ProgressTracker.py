@@ -14,7 +14,9 @@ import datetime
 import time
 from Token import Token
 
-bot = commands.Bot(command_prefix='$', help_command=None)
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='$', help_command=None, intents=intents)
 excelfilename = 'HabitTrackerDiscordBot.xlsx'
 
 wb = OP.load_workbook(os.path.join(os.path.dirname(__file__),excelfilename), data_only=True)
