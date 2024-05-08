@@ -14,9 +14,9 @@ import datetime
 import time
 from Token import Token
 
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix='$', help_command=None, intents=intents)
+Intents_=discord.Intents.default()
+Intents_.message_content = True
+bot = commands.Bot(command_prefix='$', help_command=None, intents=Intents_)
 excelfilename = 'HabitTrackerDiscordBot.xlsx'
 
 wb = OP.load_workbook(os.path.join(os.path.dirname(__file__),excelfilename), data_only=True)
@@ -136,7 +136,7 @@ async def removeuser(ctx):
         await ctx.send("User successfully removed")
 
 @bot.command()
-async def add(ctx, duration:int = -1, importance:int = -1, desc:str = ""):
+async def add(ctx, duration:int = -1, importance:int = -1,repeat:int = 0, desc:str = ""):
     global wb
     global ws
 
@@ -166,6 +166,7 @@ async def add(ctx, duration:int = -1, importance:int = -1, desc:str = ""):
         usersheet['D2'].value = response.content
         usersheet['E2'].value = duration
         usersheet['G2'].value = importance
+        usersheet['H2'].value = repeat
 
         usersheet['J2'] = "=BaseRef!$B$1+(" + username + "!E2 * BaseRef!$B$3)+(" + username + "!G2 * BaseRef!$B$5)"
 
@@ -242,10 +243,13 @@ async def finish(ctx):
 
     for row in range(1, usersheet['B5'].value):
         if(response.content.lower() == usersheet['D' + str(row + 1)].value.lower()):
-            result = usersheet['J' + str(row + 1)].value
-            usersheet.move_range("D" + str(row + 2) + ":J" + str(usersheet['B5'].value + row + 2), rows=-1, cols=0)
-            usersheet['B5'].value -= 1
+            if(usersheet['H' + str(row + 1)].value > 0):
+                usersheet['H' + str(row + 1)].value -= 1
+            elif(usersheet['H' + str(row + 1)].value != -1):
+                usersheet.move_range("D" + str(row + 2) + ":J" + str(usersheet['B5'].value + row + 2), rows=-1, cols=0)
+                usersheet['B5'].value -= 1
             wb.save(excelfilename)
+            result = usersheet['J' + str(row + 1)].value
 
     if(result != -1):
         usersheet = wb[ctx.author.name]
@@ -253,7 +257,7 @@ async def finish(ctx):
         usersheet['B2'].value += 1 
         usersheet['C3'].value += 1
 
-        if(usersheet['C3'].value >= usersheet['B3']):
+        if(usersheet['C3'].value >= usersheet['B3'].value):
             await ctx.send("Daily goal reached! You got a bonus :D")
             usersheet['B1'].value += ws['B1'].value * ws['B1'].value
 
@@ -285,6 +289,7 @@ async def tasks(ctx):
         embed = discord.Embed(title=targetuser + "'s tasks", colour=discord.Colour(0x3e038c),)
         embed.add_field(name=f"Name", value="".join(map(str,outputtable(4, 2, 1, amnt, usersheet))), inline=True)
         embed.add_field(name=f"Importance", value="".join(map(str,outputtable(7, 2, 1, amnt, usersheet))), inline=True)
+        embed.add_field(name=f"Repeat", value="".join(map(str,outputtable(8, 2, 1, amnt, usersheet))), inline=True)
         embed.add_field(name=f"Points", value="".join(map(str,outputtable(10, 2, 1, amnt, usersheet))), inline=True)
         await ctx.send(embed=embed)
 
