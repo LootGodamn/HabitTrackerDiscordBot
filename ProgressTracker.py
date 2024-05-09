@@ -52,7 +52,8 @@ def dailygoalcheck():
 async def help(ctx):
     embed = discord.Embed(title="All commands", colour=discord.Colour(0x3e038c))
     embed.add_field(name=f"Command", value="".join(map(str,outputtable(9, 2, 1, 11, ws))), inline=True)
-    embed.add_field(name=f"Description", value="".join(map(str,outputtable(10, 2, 1, 11, ws))), inline=True)
+    embed.add_field(name=f"Parameters", value="".join(map(str,outputtable(10, 2, 1, 11, ws))), inline=True)
+    embed.add_field(name=f"Description", value="".join(map(str,outputtable(11, 2, 1, 11, ws))), inline=True)
     await ctx.send(embed=embed)
 
 def numtochar(input:int):
@@ -136,7 +137,7 @@ async def removeuser(ctx):
         await ctx.send("User successfully removed")
 
 @bot.command()
-async def add(ctx, duration:int = -1, importance:int = -1,repeat:int = 0, desc:str = ""):
+async def add(ctx, duration:int = -1, importance:int = -1,repeat:int = 0):
     global wb
     global ws
 
@@ -200,13 +201,21 @@ async def remove(ctx):
 
     usersheet = wb[ctx.author.name]
     result = -1
-
-    for row in range(1, usersheet['B5'].value):
-        if(response.content.lower() == usersheet['D' + str(row + 1)].value.lower()):
-            result = usersheet['J' + str(row + 1)].value
-            usersheet.move_range("D" + str(row + 2) + ":J" + str(usersheet['B5'].value + row + 2), rows=-1, cols=0)
+    if(usersheet['B5'].value == 1):
+        if(response.content.lower() == usersheet['D2'].value.lower()):
+            result = usersheet['J2'].value
             usersheet['B5'].value -= 1
             wb.save(excelfilename)
+            for row in usersheet['D2:J2']:
+                for cell in row:
+                    cell.value = None
+    elif(usersheet['B5'].value > 1):
+        for row in range(1, usersheet['B5'].value):
+            if(response.content.lower() == usersheet['D' + str(row + 1)].value.lower()):
+                usersheet.move_range("D" + str(row + 2) + ":J" + str(usersheet['B5'].value + row + 2), rows=-1, cols=0)
+                usersheet['B5'].value -= 1
+                result = usersheet['J' + str(row + 1)].value
+                wb.save(excelfilename)
 
     if(result != -1):
         await ctx.send("Task successfully removed")
@@ -241,15 +250,24 @@ async def finish(ctx):
     usersheet = wb[ctx.author.name]
     result = -1
 
-    for row in range(1, usersheet['B5'].value):
-        if(response.content.lower() == usersheet['D' + str(row + 1)].value.lower()):
-            if(usersheet['H' + str(row + 1)].value > 0):
-                usersheet['H' + str(row + 1)].value -= 1
-            elif(usersheet['H' + str(row + 1)].value != -1):
-                usersheet.move_range("D" + str(row + 2) + ":J" + str(usersheet['B5'].value + row + 2), rows=-1, cols=0)
-                usersheet['B5'].value -= 1
+    if(usersheet['B5'].value == 1):
+        if(response.content.lower() == usersheet['D2'].value.lower()):
+            result = usersheet['J2'].value
+            usersheet['B5'].value -= 1
             wb.save(excelfilename)
-            result = usersheet['J' + str(row + 1)].value
+            for row in usersheet['D2:J2']:
+                for cell in row:
+                    cell.value = None
+    elif(usersheet['B5'].value > 1):
+        for row in range(1, usersheet['B5'].value):
+            if(response.content.lower() == usersheet['D' + str(row + 1)].value.lower()):
+                if(usersheet['H' + str(row + 1)].value > 0):
+                    usersheet['H' + str(row + 1)].value -= 1
+                elif(usersheet['H' + str(row + 1)].value != -1):
+                    usersheet.move_range("D" + str(row + 2) + ":J" + str(usersheet['B5'].value + row + 2), rows=-1, cols=0)
+                    usersheet['B5'].value -= 1
+                wb.save(excelfilename)
+                result = usersheet['J' + str(row + 1)].value
 
     if(result != -1):
         usersheet = wb[ctx.author.name]
@@ -288,7 +306,6 @@ async def tasks(ctx):
 
         embed = discord.Embed(title=targetuser + "'s tasks", colour=discord.Colour(0x3e038c),)
         embed.add_field(name=f"Name", value="".join(map(str,outputtable(4, 2, 1, amnt, usersheet))), inline=True)
-        embed.add_field(name=f"Importance", value="".join(map(str,outputtable(7, 2, 1, amnt, usersheet))), inline=True)
         embed.add_field(name=f"Repeat", value="".join(map(str,outputtable(8, 2, 1, amnt, usersheet))), inline=True)
         embed.add_field(name=f"Points", value="".join(map(str,outputtable(10, 2, 1, amnt, usersheet))), inline=True)
         await ctx.send(embed=embed)

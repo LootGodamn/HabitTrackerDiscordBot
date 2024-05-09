@@ -1,0 +1,3 @@
+@echo off 
+python "D:\Main\Python Projects\ProgressTracker\HabitTrackerDiscordBot\ProgressTracker.py"
+pause
